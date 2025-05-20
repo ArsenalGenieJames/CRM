@@ -7,9 +7,9 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-// Set user name from session
-$user_name = $_SESSION['name'] ?? 'Guest';
-$user_role = $_SESSION['role'] ?? 'user';
+// Set user name and type from session
+$user_name = $_SESSION['user_name'] ?? 'Guest'; // Changed from $_SESSION['name'] to $_SESSION['user_name']
+$user_type = $_SESSION['user_type'] ?? 'user'; // Added user_type from session
 $module = $_GET['modules'] ?? 'dashboard';
 $action = $_GET['action'] ?? 'index';
 $pageTitle = ucfirst($module) . ' - CRM System';
@@ -30,7 +30,11 @@ $pageTitle = ucfirst($module) . ' - CRM System';
         <div class="w-64 bg-gray-800 text-white">
             <div class="p-4">
                 <h1 class="text-2xl font-bold">CRM System</h1>
-                <p class="text-gray-400 text-sm mt-1">Welcome, <?php echo htmlspecialchars($user_name); ?></p>
+                <?php if($user_type === 'manager'): ?>
+                    <p class="text-gray-400 text-sm mt-1">Welcome Manager, <?php echo htmlspecialchars($user_name); ?></p>
+                <?php else: ?>
+                    <p class="text-gray-400 text-sm mt-1">Welcome, <?php echo htmlspecialchars($user_name); ?></p>
+                <?php endif; ?>
             </div>
             <nav class="mt-4">
                 <a href="index.php?modules=dashboard" class="block py-2 px-4 <?php echo $module === 'dashboard' ? 'bg-gray-900' : 'hover:bg-gray-700'; ?>">
@@ -42,18 +46,20 @@ $pageTitle = ucfirst($module) . ' - CRM System';
                 <a href="index.php?modules=contact" class="block py-2 px-4 <?php echo $module === 'contact' ? 'bg-gray-900' : 'hover:bg-gray-700'; ?>">
                     <i class="fas fa-users mr-2"></i>Contacts
                 </a>
-                <a href="index.php?modules=opportunity" class="block py-2 px-4 <?php echo $module === 'opportunity' ? 'bg-gray-900' : 'hover:bg-gray-700'; ?>">
-                    <i class="fas fa-bullseye mr-2"></i>Opportunities
-                </a>
                 <a href="index.php?modules=task" class="block py-2 px-4 <?php echo $module === 'task' ? 'bg-gray-900' : 'hover:bg-gray-700'; ?>">
                     <i class="fas fa-tasks mr-2"></i>Tasks
                 </a>
-                <a href="index.php?modules=report" class="block py-2 px-4 <?php echo $module === 'report' ? 'bg-gray-900' : 'hover:bg-gray-700'; ?>">
-                    <i class="fas fa-chart-bar mr-2"></i>Reports
+                <a href="index.php?modules=clienttask" class="block py-2 px-4 <?php echo $module === 'clienttask' ? 'bg-gray-900' : 'hover:bg-gray-700'; ?>">
+                    <i class="fas fa-chart-bar mr-2"></i>Client Task
                 </a>
-                <?php if ($user_role === 'admin'): ?>
-                <a href="index.php?modules=setting" class="block py-2 px-4 <?php echo $module === 'setting' ? 'bg-gray-900' : 'hover:bg-gray-700'; ?>">
-                    <i class="fas fa-cog mr-2"></i>Settings
+
+                <a href="index.php?modules=payout" class="block py-2 px-4 <?php echo $module === 'payout' ? 'bg-gray-900' : 'hover:bg-gray-700'; ?>">
+                    <i class="fas fa-bullseye mr-2"></i>Payout
+                </a>
+                
+                <?php if ($user_type === 'manager'): ?>
+                <a href="index.php?modules=settings" class="block py-2 px-4 <?php echo $module === 'settings' ? 'bg-gray-900' : 'hover:bg-gray-700'; ?>">
+                    <i class="fas fa-cog mr-2"></i>Setting
                 </a>
                 <?php endif; ?>
                 <a href="logout.php" class="block py-2 px-4 hover:bg-gray-700 mt-4">

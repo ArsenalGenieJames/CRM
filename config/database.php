@@ -1,30 +1,26 @@
 <?php
-// Database configuration
-define('DB_HOST', 'localhost');
-define('DB_NAME', 'crm_system');
-define('DB_USER', 'root');
-define('DB_PASS', '');
+$host = 'localhost';
+$username = 'root';
+$password = '';
+$dbname = 'crm_system';
 
-// Create database if it doesn't exist
 try {
-    $pdo = new PDO("mysql:host=" . DB_HOST, DB_USER, DB_PASS);
+    // Create database if it doesn't exist
+    $pdo = new PDO("mysql:host=$host", $username, $password);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     
-    // Create database
-    $pdo->exec("CREATE DATABASE IF NOT EXISTS " . DB_NAME);
-    $pdo->exec("USE " . DB_NAME);
+    $pdo->exec("CREATE DATABASE IF NOT EXISTS $dbname");
+    $pdo->exec("USE $dbname");
     
-    // Create users table
-    $pdo->exec("CREATE TABLE IF NOT EXISTS users (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        name VARCHAR(100) NOT NULL,
-        email VARCHAR(100) NOT NULL UNIQUE,
-        password VARCHAR(255) NOT NULL,
-        role ENUM('admin', 'manager', 'sales_rep') NOT NULL DEFAULT 'sales_rep',
-        created_at DATETIME NOT NULL,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    )");
+    // Read and execute the schema file
+    $sql = file_get_contents(__DIR__ . '/schema.sql');
+    $pdo->exec($sql);
+    
+    // Make PDO connection globally available
+    global $pdo;
     
 } catch(PDOException $e) {
-    die("Database connection failed: " . $e->getMessage());
-} 
+    error_log("Database connection failed: " . $e->getMessage());
+    die("Database connection failed. Please check your configuration.");
+}
+?> 

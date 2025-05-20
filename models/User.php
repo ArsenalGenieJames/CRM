@@ -1,27 +1,98 @@
 <?php
 class User {
-    private $db;
+    private $pdo;
+    private $id;
+    private $name;
+    private $email;
+    private $role;
 
     public function __construct() {
-        require_once 'config/database.php';
-        $this->db = new PDO(
-            "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME,
-            DB_USER,
-            DB_PASS
-        );
-        $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        require_once __DIR__ . '/../config/database.php';
+        global $pdo;
+        $this->pdo = $pdo;
+    }
+
+    public function login($email, $password) {
+        try {
+            $stmt = $this->pdo->prepare("SELECT * FROM users WHERE email = ?");
+            $stmt->execute([$email]);
+            $user = $stmt->fetch();
+
+            if ($user && password_verify($password, $user['password'])) {
+                $this->id = $user['id'];
+                $this->name = $user['name'];
+                $this->email = $user['email'];
+                $this->role = $user['role'];
+                return true;
+            }
+            return false;
+        } catch(PDOException $e) {
+            error_log($e->getMessage());
+            return false;
+        }
+    }
+
+    public function register($name, $email, $password, $role = 'employee') {
+        try {
+            $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+            $stmt = $this->pdo->prepare("
+                INSERT INTO users (name, email, password, role, created_at) 
+                VALUES (?, ?, ?, ?, NOW())
+            ");
+            return $stmt->execute([$name, $email, $hashedPassword, $role]);
+        } catch(PDOException $e) {
+            error_log($e->getMessage());
+            return false;
+        }
+    }
+
+    public function getId() {
+        return $this->id;
+    }
+
+    public function getName() {
+        return $this->name;
+    }
+
+    public function getEmail() {
+        return $this->email;
+    }
+
+    public function getRole() {
+        return $this->role;
+    }
+
+    public function isLoggedIn() {
+        return isset($this->id);
+    }
+
+    public function isAdmin() {
+        return $this->role === 'admin';
+    }
+
+    public function isManager() {
+        return $this->role === 'manager';
+    }
+
+    public function isEmployee() {
+        return $this->role === 'employee';
     }
 
     public function findByEmail($email) {
-        $stmt = $this->db->prepare("SELECT * FROM users WHERE email = ?");
-        $stmt->execute([$email]);
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+        try {
+            $stmt = $this->pdo->prepare("SELECT * FROM users WHERE email = ?");
+            $stmt->execute([$email]);
+            return $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch(PDOException $e) {
+            error_log("Error finding user by email: " . $e->getMessage());
+            return null;
+        }
     }
 
-    public function createUser($name, $email, $password, $role = 'sales_rep') {
+    public function createUser($name, $email, $password, $role = 'employee') {
         try {
             $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-            $stmt = $this->db->prepare(
+            $stmt = $this->pdo->prepare(
                 "INSERT INTO users (name, email, password, role, created_at) 
                  VALUES (?, ?, ?, ?, NOW())"
             );
@@ -52,7 +123,7 @@ class User {
             $params[] = $id;
             
             $sql = "UPDATE users SET " . implode(', ', $updates) . " WHERE id = ?";
-            $stmt = $this->db->prepare($sql);
+            $stmt = $this->pdo->prepare($sql);
             return $stmt->execute($params);
         } catch (PDOException $e) {
             error_log("Error updating user: " . $e->getMessage());
@@ -62,7 +133,7 @@ class User {
 
     public function deleteUser($id) {
         try {
-            $stmt = $this->db->prepare("DELETE FROM users WHERE id = ?");
+            $stmt = $this->pdo->prepare("DELETE FROM users WHERE id = ?");
             return $stmt->execute([$id]);
         } catch (PDOException $e) {
             error_log("Error deleting user: " . $e->getMessage());
@@ -72,7 +143,7 @@ class User {
 
     public function getAllUsers() {
         try {
-            $stmt = $this->db->query("SELECT id, name, email, role, created_at FROM users ORDER BY created_at DESC");
+            $stmt = $this->pdo->query("SELECT id, name, email, role, created_at FROM users ORDER BY created_at DESC");
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
             error_log("Error fetching users: " . $e->getMessage());
@@ -82,7 +153,7 @@ class User {
 
     public function getUserById($id) {
         try {
-            $stmt = $this->db->prepare("SELECT id, name, email, role, created_at FROM users WHERE id = ?");
+            $stmt = $this->pdo->prepare("SELECT id, name, email, role, created_at FROM users WHERE id = ?");
             $stmt->execute([$id]);
             return $stmt->fetch(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
