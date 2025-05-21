@@ -9,10 +9,11 @@ A comprehensive Customer Relationship Management (CRM) system built with PHP and
 - Password hashing for enhanced security
 - Session management
 - Secure logout functionality
+- Separate registration flows for managers and clients
 
 ### User Management
 - Multiple user roles:
-  - Managers: Full system access
+  - Managers: Full system access with dedicated registration
   - Employees: Task management and client interaction
   - Clients: View their tasks and information
 - User profile management
@@ -87,7 +88,7 @@ A comprehensive Customer Relationship Management (CRM) system built with PHP and
 
 1. Clone the repository to your web server directory
 2. Create a MySQL database
-3. Import the database schema from `config/schema.sql`
+3. Import the database schema from `sql/schema.sql`
 4. Configure database connection in `config/database.php`
 5. Access the system through your web browser
 
@@ -96,7 +97,8 @@ A comprehensive Customer Relationship Management (CRM) system built with PHP and
 ```
 CRM/
 ├── config/
-│   ├── database.php
+│   └── database.php
+├── sql/
 │   └── schema.sql
 ├── models/
 │   └── User.php
@@ -104,9 +106,15 @@ CRM/
 │   ├── client.php
 │   ├── employee.php
 │   └── index.php
+├── js/
+│   └── [JavaScript files]
+├── client.php
+├── employee.php
+├── index.php
 ├── login.php
-├── register.php
 ├── logout.php
+├── register.php
+├── managers_register.php
 └── README.md
 ```
 
