@@ -37,22 +37,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $error = "Email already exists";
                 } else {
                     // Create new employee
+                    $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
                     $stmt = $pdo->prepare("
-                        INSERT INTO employees (name, email, phone, created_at) 
-                        VALUES (?, ?, ?, NOW())
+                        INSERT INTO employees (name, email, phone, password, created_at) 
+                        VALUES (?, ?, ?, ?, NOW())
                     ");
-                    if ($stmt->execute([$name, $email, $phone])) {
-                        // Create user account with password
-                        $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-                        $stmt = $pdo->prepare("
-                            INSERT INTO users (name, email, password, role, created_at)
-                            VALUES (?, ?, ?, 'employee', NOW())
-                        ");
-                        if ($stmt->execute([$name, $email, $hashedPassword])) {
-                            $_SESSION['success'] = "Account created successfully! Please login.";
-                            header('Location: login.php');
-                            exit;
-                        }
+                    if ($stmt->execute([$name, $email, $phone, $hashedPassword])) {
+                        $_SESSION['success'] = "Account created successfully! Please login.";
+                        header('Location: login.php');
+                        exit;
                     } else {
                         $error = "Failed to create account. Please try again.";
                     }
@@ -113,7 +106,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register - CRM System</title>
+    <title>Register - Creative Studios</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -230,7 +223,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <label for="name" class="sr-only">Company Name</label>
                             <input id="name" name="name" type="text" required 
                                    class="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm" 
-                                   placeholder="Company Name"
+                                   placeholder="Name"
                                    value="<?php echo isset($_POST['name']) ? htmlspecialchars($_POST['name']) : ''; ?>">
                         </div>
                         <div>

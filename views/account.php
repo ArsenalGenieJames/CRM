@@ -118,48 +118,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             error_log($e->getMessage());
             $_SESSION['error'] = "Error updating client";
         }
-    } else {
-        // Handle adding new employee/client
-        try {
-            if (isset($_POST['add_employee'])) {
-                $stmt = $pdo->prepare("
-                    INSERT INTO employees (name, email, phone, industry, status, created_at)
-                    VALUES (?, ?, ?, ?, ?, NOW())
-                ");
-                
-                $stmt->execute([
-                    $_POST['name'],
-                    $_POST['email'],
-                    $_POST['phone'],
-                    $_POST['industry'],
-                    $_POST['status']
-                ]);
-
-                $_SESSION['success'] = "Employee added successfully";
-            } else {
-                $stmt = $pdo->prepare("
-                    INSERT INTO clients (name, industry, contact_name, contact_email, 
-                                       contact_phone, password, created_at)
-                    VALUES (?, ?, ?, ?, ?, ?, NOW())
-                ");
-                
-                $hashedPassword = password_hash($_POST['password'], PASSWORD_DEFAULT);
-                
-                $stmt->execute([
-                    $_POST['name'],
-                    $_POST['industry'],
-                    $_POST['contact_name'],
-                    $_POST['contact_email'],
-                    $_POST['contact_phone'],
-                    $hashedPassword
-                ]);
-
-                $_SESSION['success'] = "Client added successfully";
-            }
-        } catch(PDOException $e) {
-            error_log($e->getMessage());
-            $_SESSION['error'] = "Error adding record";
-        }
     }
     
     // Refresh data after changes
@@ -191,15 +149,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <h1 class="text-3xl font-bold">
             <i class="fas fa-building mr-2"></i>Accounts Management
         </h1>
-
-        <div class="flex space-x-4">
-            <button onclick="openModal('addEmployeeModal')" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                <i class="fas fa-user-plus mr-2"></i>Add Employee
-            </button>
-            <button onclick="openModal('addClientModal')" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
-                <i class="fas fa-building mr-2"></i>Add Client
-            </button>
-        </div>
     </div>
 
     <!-- Employees Table -->
@@ -320,127 +269,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <?php endforeach; ?>
             </tbody>
         </table>
-    </div>
-
-    <!-- Add Employee Modal -->
-    <div id="addEmployeeModal" class="fixed inset-0 bg-black bg-opacity-50 hidden">
-        <div class="flex items-center justify-center min-h-screen">
-            <div class="bg-white rounded-lg w-1/2">
-                <div class="flex justify-between items-center p-6 border-b">
-                    <h3 class="text-xl font-semibold">Add New Employee</h3>
-                    <button onclick="closeModal('addEmployeeModal')" class="text-gray-600 hover:text-gray-800">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                <form method="POST" class="p-6">
-                    <input type="hidden" name="add_employee" value="1">
-                    <div class="mb-4">
-                        <label class="block text-gray-700 text-sm font-bold mb-2">Name</label>
-                        <input type="text" name="name" required 
-                               class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700">
-                    </div>
-                    <div class="mb-4">
-                        <label class="block text-gray-700 text-sm font-bold mb-2">Email</label>
-                        <select name="email" required
-                                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700">
-                            <?php
-                            $stmt = $pdo->query("SELECT email FROM employees WHERE status = 'Active'");
-                            while ($row = $stmt->fetch()) {
-                                echo '<option value="' . htmlspecialchars($row['email']) . '">' . 
-                                     htmlspecialchars($row['email']) . '</option>';
-                            }
-                            ?>
-                        </select>
-                    </div>
-                    <div class="mb-4">
-                        <label class="block text-gray-700 text-sm font-bold mb-2">Phone</label>
-                        <input type="tel" name="phone" required 
-                               class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700">
-                    </div>
-                    <div class="mb-4">
-                        <label class="block text-gray-700 text-sm font-bold mb-2">Industry</label>
-                        <select name="industry" required 
-                                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700">
-                            <option value="Technology">Technology</option>
-                            <option value="Healthcare">Healthcare</option>
-                            <option value="Finance">Finance</option>
-                            <option value="Education">Education</option>
-                            <option value="Other">Other</option>
-                        </select>
-                    </div>
-                    <div class="mb-4">
-                        <label class="block text-gray-700 text-sm font-bold mb-2">Status</label>
-                        <select name="status" required 
-                                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700">
-                            <option value="Active">Active</option>
-                            <option value="Inactive">Inactive</option>
-                        </select>
-                    </div>
-                    <div class="flex justify-end">
-                        <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                            Add Employee
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- Add Client Modal -->
-    <div id="addClientModal" class="fixed inset-0 bg-black bg-opacity-50 hidden">
-        <div class="flex items-center justify-center min-h-screen">
-            <div class="bg-white rounded-lg w-1/2">
-                <div class="flex justify-between items-center p-6 border-b">
-                    <h3 class="text-xl font-semibold">Add New Client</h3>
-                    <button onclick="closeModal('addClientModal')" class="text-gray-600 hover:text-gray-800">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                <form method="POST" class="p-6">
-                    <div class="mb-4">
-                        <label class="block text-gray-700 text-sm font-bold mb-2">Company Name</label>
-                        <input type="text" name="name" required 
-                               class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700">
-                    </div>
-                    <div class="mb-4">
-                        <label class="block text-gray-700 text-sm font-bold mb-2">Industry</label>
-                        <select name="industry" required 
-                                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700">
-                            <option value="Technology">Technology</option>
-                            <option value="Healthcare">Healthcare</option>
-                            <option value="Finance">Finance</option>
-                            <option value="Education">Education</option>
-                            <option value="Other">Other</option>
-                        </select>
-                    </div>
-                    <div class="mb-4">
-                        <label class="block text-gray-700 text-sm font-bold mb-2">Contact Name</label>
-                        <input type="text" name="contact_name" required 
-                               class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700">
-                    </div>
-                    <div class="mb-4">
-                        <label class="block text-gray-700 text-sm font-bold mb-2">Contact Email</label>
-                        <input type="email" name="contact_email" required 
-                               class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700">
-                    </div>
-                    <div class="mb-4">
-                        <label class="block text-gray-700 text-sm font-bold mb-2">Contact Phone</label>
-                        <input type="tel" name="contact_phone" required 
-                               class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700">
-                    </div>
-                    <div class="mb-4">
-                        <label class="block text-gray-700 text-sm font-bold mb-2">Password</label>
-                        <input type="password" name="password" required 
-                               class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700">
-                    </div>
-                    <div class="flex justify-end">
-                        <button type="submit" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
-                            Add Client
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
     </div>
 
     <!-- Edit/Delete Modals for Employees -->

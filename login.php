@@ -22,8 +22,6 @@ if (isset($_SESSION['user_id'])) {
     exit;
 }
 
-require_once 'models/User.php';
-
 $error = '';
 $success = '';
 
@@ -49,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->execute([$email]);
                 $user = $stmt->fetch();
 
-                if ($user && password_verify($password, $user['password'])) {
+                if ($user && isset($user['password']) && password_verify($password, $user['password'])) {
                     $_SESSION['user_id'] = $user['id'];
                     $_SESSION['user_name'] = $user['name'];
                     $_SESSION['user_type'] = str_replace('s', '', $tables[$i]); // Remove 's' from table name
@@ -95,7 +93,7 @@ if (isset($_SESSION['success'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - CRM System</title>
+    <title>Login - Creative Studios</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>

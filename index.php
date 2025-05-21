@@ -29,7 +29,7 @@ $pageTitle = ucfirst($module) . ' - CRM System';
         <!-- Sidebar -->
         <div class="w-64 bg-gray-800 text-white">
             <div class="p-4">
-                <h1 class="text-2xl font-bold">CRM System</h1>
+                <h1 class="text-2xl font-bold">Creative Studios</h1>
                 <?php if($user_type === 'manager'): ?>
                     <p class="text-gray-400 text-sm mt-1">Welcome Manager, <?php echo htmlspecialchars($user_name); ?></p>
                 <?php else: ?>
