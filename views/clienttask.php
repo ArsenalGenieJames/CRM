@@ -1,7 +1,7 @@
 <?php
 require_once 'config/database.php';
 
-// Get tasks assigned to the logged in employee
+// Get tasks assigned to the logged in client
 try {
     $stmt = $pdo->prepare("
         SELECT t.id, t.subject, t.description, t.due_date, t.priority, t.status,
@@ -13,7 +13,7 @@ try {
         LEFT JOIN managers m ON t.manager_id = m.id
         LEFT JOIN employee_task_assignments eta ON t.id = eta.task_id
         LEFT JOIN employees e ON eta.employee_id = e.id
-        WHERE eta.employee_id = ?
+        WHERE t.client_id = ?
         ORDER BY t.due_date ASC
     ");
     $stmt->execute([$_SESSION['user_id']]);
@@ -42,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $stmt = $pdo->prepare("
                 INSERT INTO task_updates (
                     task_id, user_type, user_id, status, comments
-                ) VALUES (?, 'Employee', ?, ?, ?)
+                ) VALUES (?, 'Client', ?, ?, ?)
             ");
             $stmt->execute([
                 $_POST['task_id'],
@@ -73,7 +73,7 @@ $statuses = ['Not Started', 'In Progress', 'Completed', 'Deferred'];
             <thead class="bg-gray-50">
                 <tr>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Task Details</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned To</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due Date</th>
@@ -83,7 +83,7 @@ $statuses = ['Not Started', 'In Progress', 'Completed', 'Deferred'];
             <tbody class="bg-white divide-y divide-gray-200">
                 <?php if (empty($tasks)): ?>
                 <tr>
-                    <td colspan="6" class="px-6 py-4 text-center text-gray-500">No tasks assigned yet</td>
+                    <td colspan="6" class="px-6 py-4 text-center text-gray-500">No tasks found</td>
                 </tr>
                 <?php else: ?>
                 <?php foreach ($tasks as $task): ?>
@@ -94,7 +94,7 @@ $statuses = ['Not Started', 'In Progress', 'Completed', 'Deferred'];
                         <div class="text-xs text-gray-400 mt-1">Assigned by: <?php echo htmlspecialchars($task['manager_name']); ?></div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="text-sm text-gray-900"><?php echo htmlspecialchars($task['client_name']); ?></div>
+                        <div class="text-sm text-gray-900"><?php echo htmlspecialchars($task['employee_name']); ?></div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
                         <?php 

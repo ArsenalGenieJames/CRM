@@ -47,7 +47,7 @@ $pageTitle = ucfirst($module) . ' - CRM System';
                     <i class="fas fa-users mr-2"></i>Contacts
                 </a>
                 <a href="index.php?modules=task" class="block py-2 px-4 <?php echo $module === 'task' ? 'bg-gray-900' : 'hover:bg-gray-700'; ?>">
-                    <i class="fas fa-tasks mr-2"></i>Tasks
+                    <i class="fas fa-tasks mr-2"></i>Employee Tasks
                 </a>
                 <a href="index.php?modules=clienttask" class="block py-2 px-4 <?php echo $module === 'clienttask' ? 'bg-gray-900' : 'hover:bg-gray-700'; ?>">
                     <i class="fas fa-chart-bar mr-2"></i>Client Task

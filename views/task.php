@@ -10,7 +10,7 @@ try {
         FROM tasks t
         LEFT JOIN clients c ON t.client_id = c.id 
         LEFT JOIN managers m ON t.manager_id = m.id
-        WHERE 1
+        WHERE t.status != 'Completed'
     ");
     $tasks = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch(PDOException $e) {
@@ -59,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 }
 
 $priorities = ['Low', 'Medium', 'High'];
-$statuses = ['Not Started', 'In Progress', 'Completed', 'Deferred'];
+$statuses = ['Not Started', 'In Progress', 'Deferred'];
 ?>
 
 <div class="container mx-auto">
@@ -75,12 +75,43 @@ $statuses = ['Not Started', 'In Progress', 'Completed', 'Deferred'];
         <div id="taskModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full">
             <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
                 <div class="mt-3">
-                    <h3 class="text-lg font-medium leading-6 text-gray-900">Create New Task</h3>
+                    <h3 class="text-lg font-medium leading-6 text-gray-900">Assign Task</h3>
                     <form id="taskForm" class="mt-4" method="POST">
                         <input type="hidden" name="action" value="add_task">
                         <div class="mb-4">
+                            <label class="block text-gray-700 text-sm font-bold mb-2" for="client">Select Client</label>
+                            <select id="client" name="client_id" required onchange="loadClientTasks(this.value)" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                                <option value="">Select Client</option>
+                                <?php
+                                try {
+                                    $stmt = $pdo->query("SELECT id, name FROM clients ORDER BY name ASC");
+                                    while ($client = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                                        echo "<option value='" . htmlspecialchars($client['id']) . "'>" . htmlspecialchars($client['name']) . "</option>";
+                                    }
+                                } catch(PDOException $e) {
+                                    error_log($e->getMessage());
+                                }
+                                ?>
+                            </select>
+                        </div>
+                        <div class="mb-4">
                             <label class="block text-gray-700 text-sm font-bold mb-2" for="subject">Task Subject</label>
-                            <input type="text" id="subject" name="subject" required class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                            <select id="subject" name="subject" required class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                                <option value="">Select Task</option>
+                                <?php
+                                if (isset($_GET['client_id'])) {
+                                    try {
+                                        $stmt = $pdo->prepare("SELECT id, subject FROM tasks WHERE client_id = ? AND status != 'Completed' ORDER BY created_at DESC");
+                                        $stmt->execute([$_GET['client_id']]);
+                                        while ($task = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                                            echo "<option value='" . htmlspecialchars($task['id']) . "'>" . htmlspecialchars($task['subject']) . "</option>";
+                                        }
+                                    } catch(PDOException $e) {
+                                        error_log($e->getMessage());
+                                    }
+                                }
+                                ?>
+                            </select>
                         </div>
                         <div class="mb-4">
                             <label class="block text-gray-700 text-sm font-bold mb-2" for="description">Description</label>
@@ -135,7 +166,7 @@ $statuses = ['Not Started', 'In Progress', 'Completed', 'Deferred'];
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due Date</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Manager</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee Assigned</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
             </thead>
@@ -167,7 +198,6 @@ $statuses = ['Not Started', 'In Progress', 'Completed', 'Deferred'];
                         $statusColors = [
                             'Not Started' => 'gray',
                             'In Progress' => 'blue',
-                            'Completed' => 'green',
                             'Deferred' => 'yellow'
                         ];
                         $color = $statusColors[$task['status']] ?? 'gray';
@@ -216,5 +246,23 @@ window.onclick = function(event) {
     if (event.target.classList.contains('fixed')) {
         closeModal(event.target.id);
     }
+}
+
+function loadClientTasks(clientId) {
+    if (!clientId) {
+        document.getElementById('subject').innerHTML = '<option value="">Select Task</option>';
+        return;
+    }
+
+    fetch(`get_client_tasks.php?client_id=${clientId}`)
+        .then(response => response.json())
+        .then(tasks => {
+            let options = '<option value="">Select Task</option>';
+            tasks.forEach(task => {
+                options += `<option value="${task.id}">${task.subject}</option>`;
+            });
+            document.getElementById('subject').innerHTML = options;
+        })
+        .catch(error => console.error('Error loading tasks:', error));
 }
 </script>

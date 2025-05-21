@@ -14,6 +14,24 @@ try {
     $stmt->execute([$_SESSION['user_id']]);
     $client = $stmt->fetch();
 
+    // Handle task creation
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_task'])) {
+        $subject = $_POST['subject'];
+        $description = $_POST['description'];
+        $due_date = $_POST['due_date'];
+        $priority = $_POST['priority'];
+
+        $stmt = $pdo->prepare("
+            INSERT INTO tasks (subject, description, due_date, priority, status, client_id) 
+            VALUES (?, ?, ?, ?, 'Not Started', ?)
+        ");
+        $stmt->execute([$subject, $description, $due_date, $priority, $_SESSION['user_id']]);
+        
+        // Redirect to refresh the page
+        header('Location: client.php');
+        exit;
+    }
+
     // Get client's tasks
     $stmt = $pdo->prepare("
         SELECT t.*, m.name as manager_name 
@@ -57,6 +75,68 @@ try {
     </nav>
 
     <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <!-- Create Task Button -->
+        <div class="mb-6">
+            <button onclick="document.getElementById('createTaskModal').classList.remove('hidden')" 
+                    class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                Create New Task
+            </button>
+        </div>
+
+        <!-- Create Task Modal -->
+        <div id="createTaskModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
+            <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+                <div class="mt-3">
+                    <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4">Create New Task</h3>
+                    <form method="POST" action="">
+                        <div class="mb-4">
+                            <label class="block text-gray-700 text-sm font-bold mb-2" for="subject">
+                                Subject
+                            </label>
+                            <input type="text" name="subject" id="subject" required
+                                   class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-gray-700 text-sm font-bold mb-2" for="description">
+                                Description
+                            </label>
+                            <textarea name="description" id="description" required
+                                      class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                                      rows="4" placeholder="Enter task description and include any relevant material links"></textarea>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-gray-700 text-sm font-bold mb-2" for="due_date">
+                                Due Date
+                            </label>
+                            <input type="datetime-local" name="due_date" id="due_date" required
+                                   class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-gray-700 text-sm font-bold mb-2" for="priority">
+                                Priority
+                            </label>
+                            <select name="priority" id="priority" required
+                                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                                <option value="Low">Low</option>
+                                <option value="Medium">Medium</option>
+                                <option value="High">High</option>
+                            </select>
+                        </div>
+                        <div class="flex justify-end">
+                            <button type="button" onclick="document.getElementById('createTaskModal').classList.add('hidden')"
+                                    class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded mr-2">
+                                Cancel
+                            </button>
+                            <button type="submit" name="create_task"
+                                    class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                                Create Task
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
         <!-- Client Information -->
         <div class="bg-white shadow rounded-lg p-6 mb-6">
             <h2 class="text-2xl font-bold text-gray-800 mb-4">Client Information</h2>
@@ -91,7 +171,7 @@ try {
                         <thead class="bg-gray-50">
                             <tr>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Manager</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due Date</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>

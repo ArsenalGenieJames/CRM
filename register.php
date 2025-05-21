@@ -37,22 +37,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $error = "Email already exists";
                 } else {
                     // Create new employee
-                    $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
                     $stmt = $pdo->prepare("
-                        INSERT INTO employees (name, email, password, created_at) 
+                        INSERT INTO employees (name, email, phone, created_at) 
                         VALUES (?, ?, ?, NOW())
                     ");
-                    if ($stmt->execute([$name, $email, $hashedPassword])) {
-                        $_SESSION['success'] = "Account created successfully! Please login.";
-                        header('Location: login.php');
-                        exit;
+                    if ($stmt->execute([$name, $email, $phone])) {
+                        // Create user account with password
+                        $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+                        $stmt = $pdo->prepare("
+                            INSERT INTO users (name, email, password, role, created_at)
+                            VALUES (?, ?, ?, 'employee', NOW())
+                        ");
+                        if ($stmt->execute([$name, $email, $hashedPassword])) {
+                            $_SESSION['success'] = "Account created successfully! Please login.";
+                            header('Location: login.php');
+                            exit;
+                        }
                     } else {
-                        $error = "Failed to create account";
+                        $error = "Failed to create account. Please try again.";
                     }
                 }
             } catch(PDOException $e) {
                 error_log("Registration error: " . $e->getMessage());
-                $error = "An error occurred during registration";
+                $error = "Database error: " . $e->getMessage();
             }
         }
     } elseif ($role === 'client') {
@@ -90,12 +97,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         header('Location: login.php');
                         exit;
                     } else {
-                        $error = "Failed to create account";
+                        $error = "Failed to create account. Please try again.";
                     }
                 }
             } catch(PDOException $e) {
                 error_log("Registration error: " . $e->getMessage());
-                $error = "An error occurred during registration";
+                $error = "Database error: " . $e->getMessage();
             }
         }
     }
@@ -131,6 +138,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <span class="font-medium text-gray-900">Client</span>
                     </div>
                 </div>
+
+                <p class="mt-2 text-center text-sm text-gray-600">
+                    Or
+                    <a href="login.php" class="font-medium text-blue-600 hover:text-blue-500">
+                        sign in to your account
+                    </a>
+                </p>
             </div>
 
             <?php if ($error): ?>
